@@ -109,20 +109,74 @@ public class Model extends Observable {
     public boolean tilt(Side side) {
         boolean changed;
         changed = false;
-
         // TODO: Modify this.board (and perhaps this.score) to account
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
-        for (int i = 0; i < board.size(); i++) {
-            for (int j = 0; j < board.size()-1; j++) {
-                if (this.board.tile(j,i).value() == this.board.tile(j+1,i).value()){
-                    Tile t=this.board.tile(j,i);
-                    t.move(j+1,i);
-                    this.score += 2 * t.value();
+        board.setViewingPerspective(side);
+        for (int j = 0 ; j < board.size(); j++) {
+            if (board.tile(j,0) != null && board.tile(j,1) != null && board.tile(j,2) != null && board.tile(j,3) != null){
+                int zero=board.tile(j,0).value();
+                if (zero != 0 && zero == board.tile(j,1).value() && zero == board.tile(j,2).value() && zero == board.tile(j,3).value()){
+                    board.move(j,3,board.tile(j,0));
+                    board.move(j,2,board.tile(j,1));
+                    score += 4 * zero;
+                    changed = true;
+                    continue;
+                }
+            }
+            for (int i = board.size()-1; i >= 0; i--) {
+                Tile t = this.board.tile(j,i);
+                if (t != null){
+                    if (i+1 <board.size() && this.board.tile(j,i+1) == null){
+                        board.move(j,i+1,t);
+                        changed = true;
+                    }
+                }
+            }
+            boolean merge=true;
+            for (int i = board.size()-1; i > 0; i--) {
+                Tile t = this.board.tile(j,i);
+                if (t != null && this.board.tile(j,i-1)!=null){
+                    if (t.value() == this.board.tile(j,i-1).value() && merge){
+                        board.move(j,i,this.board.tile(j,i-1));
+                        score += 2 * t.value();
+                        merge=false;
+                        changed = true;
+                    }
+                }
+            }
+            for (int i = board.size()-1; i >= 0; i--) {
+                Tile t = this.board.tile(j,i);
+                if (t != null){
+                    if (i+1 <board.size() && this.board.tile(j,i+1) == null){
+                        board.move(j,i+1,t);
+                        changed = true;
+                    }
+                }
+            }
+            for (int i = board.size()-1; i > 0; i--) {
+                Tile t = this.board.tile(j,i);
+                if (t != null && this.board.tile(j,i-1)!=null){
+                    if (t.value() == this.board.tile(j,i-1).value() && merge){
+                        board.move(j,i,this.board.tile(j,i-1));
+                        score += 2 * t.value();
+                        merge=false;
+                        changed = true;
+                    }
+                }
+            }
+            for (int i = board.size()-1; i >= 0; i--) {
+                Tile t = this.board.tile(j,i);
+                if (t != null){
+                    if (i+1 <board.size() && this.board.tile(j,i+1) == null){
+                        board.move(j,i+1,t);
+                        changed = true;
+                    }
                 }
             }
 
         }
+        board.setViewingPerspective(Side.NORTH);
         checkGameOver();
         if (changed) {
             setChanged();
@@ -130,15 +184,6 @@ public class Model extends Observable {
         return changed;
     }
     //给出当前位置的tile，往上寻找（因为只向上倾斜），返回第一个不是空的tile
-    public Tile search(int col,int row){
-        int i;
-        for (i = row; i < 4; i++) {
-            if (this.board.tile(col,i)!=null){
-                break;
-            }
-        }
-        return this.board.tile(col,i);
-    }
 
     /** Checks if the game is over and sets the gameOver variable
      *  appropriately.
