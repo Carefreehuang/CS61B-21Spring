@@ -1,11 +1,10 @@
 package game2048;
 
-import java.util.Formatter;
-import java.util.Observable;
-
+import java.util.*;
+import java.util.function.Predicate;
 
 /** The state of a game of 2048.
- *  @author TODO: YOUR NAME HERE
+ *  @author Exuanbo
  */
 public class Model extends Observable {
     /** Current contents of the board. */
@@ -109,81 +108,49 @@ public class Model extends Observable {
     public boolean tilt(Side side) {
         boolean changed;
         changed = false;
+
         // TODO: Modify this.board (and perhaps this.score) to account
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
         board.setViewingPerspective(side);
-        for (int j = 0 ; j < board.size(); j++) {
-            if (board.tile(j,0) != null && board.tile(j,1) != null && board.tile(j,2) != null && board.tile(j,3) != null){
-                int zero=board.tile(j,0).value();
-                if (zero != 0 && zero == board.tile(j,1).value() && zero == board.tile(j,2).value() && zero == board.tile(j,3).value()){
-                    board.move(j,3,board.tile(j,0));
-                    board.move(j,2,board.tile(j,1));
-                    score += 4 * zero;
+        for (int col = 0; col < board.size(); col++) { //对每列进行操作
+            for (int row = board.size() - 1; row >= 0; row--){ //从最上面一行往下进行遍历操作
+                Tile tile = board.tile(col, row);
+                int nextRow = nextNonNullTileRow(col, row);//找到下一个不为空的tile
+                if (nextRow == -1) {
+                    break;
+                }
+                Tile nextTile = board.tile(col, nextRow);
+                if (tile == null || tile.value() == nextTile.value()) {
+                    //卧槽，真的不好理解这是怎么想出来的，但是能看懂
+                    //关键就在于避免了一个tile进行多次的合并
+                    //为空要上移，相等要合并
                     changed = true;
-                    continue;
-                }
-            }
-            for (int i = board.size()-1; i >= 0; i--) {
-                Tile t = this.board.tile(j,i);
-                if (t != null){
-                    if (i+1 <board.size() && this.board.tile(j,i+1) == null){
-                        board.move(j,i+1,t);
-                        changed = true;
+                    if (board.move(col, row, nextTile)) {
+                        score += 2 * nextTile.value();
+                    } else {
+                        row++;//避免漏算新合并的tile
                     }
                 }
             }
-            boolean merge=true;
-            for (int i = board.size()-1; i > 0; i--) {
-                Tile t = this.board.tile(j,i);
-                if (t != null && this.board.tile(j,i-1)!=null){
-                    if (t.value() == this.board.tile(j,i-1).value() && merge){
-                        board.move(j,i,this.board.tile(j,i-1));
-                        score += 2 * t.value();
-                        merge=false;
-                        changed = true;
-                    }
-                }
-            }
-            for (int i = board.size()-1; i >= 0; i--) {
-                Tile t = this.board.tile(j,i);
-                if (t != null){
-                    if (i+1 <board.size() && this.board.tile(j,i+1) == null){
-                        board.move(j,i+1,t);
-                        changed = true;
-                    }
-                }
-            }
-            for (int i = board.size()-1; i > 0; i--) {
-                Tile t = this.board.tile(j,i);
-                if (t != null && this.board.tile(j,i-1)!=null){
-                    if (t.value() == this.board.tile(j,i-1).value() && merge){
-                        board.move(j,i,this.board.tile(j,i-1));
-                        score += 2 * t.value();
-                        merge=false;
-                        changed = true;
-                    }
-                }
-            }
-            for (int i = board.size()-1; i >= 0; i--) {
-                Tile t = this.board.tile(j,i);
-                if (t != null){
-                    if (i+1 <board.size() && this.board.tile(j,i+1) == null){
-                        board.move(j,i+1,t);
-                        changed = true;
-                    }
-                }
-            }
-
         }
         board.setViewingPerspective(Side.NORTH);
+
         checkGameOver();
         if (changed) {
             setChanged();
         }
         return changed;
     }
-    //给出当前位置的tile，往上寻找（因为只向上倾斜），返回第一个不是空的tile
+
+    private int nextNonNullTileRow(int col, int row) {//给出当前tile，从上往下，返回第一个不为空的tile的行位置，若无，则返回-1
+        for (int pos = row - 1; pos >= 0; pos--) {
+            if (board.tile(col, pos) != null) {
+                return pos;
+            }
+        }
+        return -1;
+    }
 
     /** Checks if the game is over and sets the gameOver variable
      *  appropriately.
@@ -201,15 +168,7 @@ public class Model extends Observable {
      *  Empty spaces are stored as null.
      * */
     public static boolean emptySpaceExists(Board b) {
-        // TODO: Fill in this function.
-        for (int i = 0; i < b.size(); i++) {
-            for (int j = 0; j < b.size(); j++) {
-                if (b.tile(i,j)==null){
-                    return true;
-                }
-            }
-        }
-        return false;
+        return TileUtils.some(Objects::isNull, b);
     }
 
     /**
@@ -218,15 +177,7 @@ public class Model extends Observable {
      * given a Tile object t, we get its value with t.value().
      */
     public static boolean maxTileExists(Board b) {
-        // TODO: Fill in this function.
-        for (int i = 0; i < b.size(); i++) {
-            for (int j = 0; j < b.size(); j++) {
-                if ( b.tile(i,j)!=null && b.tile(i, j).value() == MAX_PIECE){
-                    return true;
-                }
-            }
-        }
-        return false;
+        return TileUtils.some(tile -> tile != null && tile.value() == MAX_PIECE, b);
     }
 
     /**
@@ -236,28 +187,70 @@ public class Model extends Observable {
      * 2. There are two adjacent tiles with the same value.
      */
     public static boolean atLeastOneMoveExists(Board b) {
-        // TODO: Fill in this function.
-        if (emptySpaceExists(b)){
+        if (emptySpaceExists(b)) {
             return true;
         }
-        else {
-            return twoAdjacentSame(b);
-        }
-    }
-    public static boolean twoAdjacentSame(Board b){
-        //判断行有无相邻且相同的值
-        for (int i = 0; i < b.size(); i++) {
-            for (int j = 0; j < b.size()-1; j++) {
-                if (b.tile(i,j).value() == b.tile(i,j+1).value() || b.tile(j,i).value() == b.tile(j+1,i).value()){
+        Predicate<Tile> hasAdjacentTileWithSameValue = (Tile tile) -> {
+            for (Coordinate coordinate : getAdjacentCoordinates(tile, b)) {
+                Tile adjacentTile = b.tile(coordinate.col, coordinate.row);
+                if (tile.value() == adjacentTile.value()) {
                     return true;
                 }
             }
-        }
-        return false;
+            return false;
+        };
+        return TileUtils.some(hasAdjacentTileWithSameValue, b);
     }
 
+    private static Coordinate[] getAdjacentCoordinates(Tile tile, Board b) {
+        int col = tile.col();
+        int row = tile.row();
+        Coordinate[] coordinates = Coordinate.of(new int[][]{
+                {col, row + 1}, {col + 1, row},
+                {col, row - 1}, {col - 1, row}
+        });
+        return Arrays.stream(coordinates).filter(coordinate -> isValidCoordinate(coordinate, b)).toArray(Coordinate[]::new);
+    }
+
+    private static boolean isValidCoordinate(Coordinate coordinate, Board b) {
+        int col = coordinate.col;
+        int row = coordinate.row;
+        return col >= 0 && col < b.size() && row >= 0 && row < b.size();
+    }
+
+    private static class Coordinate {
+        int col;
+        int row;
+        public Coordinate(int c, int r) {
+            col = c;
+            row = r;
+        }
+        public static Coordinate[] of(int[][] values) {
+            Coordinate[] coordinates = new Coordinate[values.length];
+            for (int i = 0; i < values.length; i++) {
+                int[] coordinate = values[i];
+                coordinates[i] = new Coordinate(coordinate[0], coordinate[1]);
+            }
+            return coordinates;
+        }
+    }
+
+    private static class TileUtils {
+        public static boolean some(Predicate<Tile> tilePredicate, Board b) {
+            for (int col = 0; col < b.size(); col++) {
+                for (int row = 0; row < b.size(); row++) {
+                    if (tilePredicate.test(b.tile(col, row))) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+    }
+
+
     @Override
-     /** Returns the model as a string, used for debugging. */
+    /** Returns the model as a string, used for debugging. */
     public String toString() {
         Formatter out = new Formatter();
         out.format("%n[%n");
