@@ -23,5 +23,25 @@ public class TimeAList {
 
     public static void timeAListConstruction() {
         // TODO: YOUR CODE HERE
+        AList<Integer> N = new AList<Integer>();
+        N.addLast(100);
+        N.addLast(1600);
+        N.addLast(94000);
+        N.addLast(28000000);
+        AList<Double> times = new AList<Double>();
+        for (int i = 0; i < N.size(); i++) {
+            times.addLast(addNTime(N.get(i)));
+        }
+        printTimingTable(N,times,N);
     }
+    public static double addNTime(int N){
+        AList<Integer> product = new AList<Integer>();
+        double startTime = System.nanoTime();
+        for (int i = 0; i < N; i++) {
+            product.addLast(i);
+        }
+        double endTime = System.nanoTime();
+        return  ((endTime - startTime)/1000000000);
+    }
+
 }
