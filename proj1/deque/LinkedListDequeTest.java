@@ -14,7 +14,7 @@ public class LinkedListDequeTest {
      * && is the "and" operation. */
     public void addIsEmptySizeTest() {
 
-
+//111
 
         LinkedListDeque<String> lld1 = new LinkedListDeque<String>();
 
