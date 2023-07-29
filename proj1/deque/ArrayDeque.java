@@ -1,6 +1,6 @@
 package deque;
 
-public class ArrayDeque<T> {
+public class ArrayDeque<T> implements Deque<T>{
         private T[] items;
         private int capacity = 8;
         private int size;
@@ -13,6 +13,7 @@ public class ArrayDeque<T> {
                 nextLast  = 5;
                 size = 0;
         }
+        @Override
         public void addFirst(T t){
                 if (size == items.length){
                         resize(2 *size);
@@ -21,6 +22,7 @@ public class ArrayDeque<T> {
                 items[nextFirst] = t;
                 nextFirst = (nextFirst - 1 + capacity) % capacity;// 加上 capacity ！
         }
+        @Override
         public void addLast(T t){
                 if (size == items.length){
                         resize(2 * size);
@@ -29,12 +31,12 @@ public class ArrayDeque<T> {
                 items[nextLast] = t;
                 nextLast = (nextLast + 1) % capacity;
         }
+        @Override
         public int size(){
                 return size;
         }
-        public boolean isEmpty(){
-                return size == 0;
-        }
+
+        @Override
         public void printDeque(){//首尾指针相同， 队列满， 打印顺序的确定
                 int first = (nextFirst + 1) % capacity;
                 int last = (nextLast - 1 + capacity) % capacity;
@@ -46,6 +48,49 @@ public class ArrayDeque<T> {
                 System.out.println(" ");
         }
 
+        @Override
+        public T removeFirst(){//remove是真的挺难的！！！
+                //不是常数时间
+                //实现的很蠢，应该可以直接修改指针位置
+                int first = (nextFirst + 1) % capacity;
+                int last = (nextLast - 1 + capacity) % capacity;
+                if (items[first] == null){
+                        return null;
+                }
+                else {
+                        T result = items[first];
+                        while (first != last) {
+                                items[first] = items[first + 1];
+                                first = (first + 1) % capacity;
+                        }
+                        items[first] = null;
+                        size -= 1;
+                        nextLast -= 1;
+                        return result;
+                }
+        }
+        @Override
+        public T removeLast(){//remove是真的挺难的！！！
+                int last = (nextLast - 1 + capacity) % capacity;
+                if (items[last] == null){
+                        return null;
+                }else{
+                T result = items [last];
+                items[last] = null;
+                size -= 1;
+                nextLast = last;
+                return result;}
+        }
+        @Override
+        public T get(int index){
+                if (index <= size - 1){
+                        int first = (nextFirst + 1) % capacity;
+                        return items[first + index];
+                }
+                else {
+                        return null;
+                }
+        }
         public void resize(int newcapacity){
                 T[] a = (T[]) new Object[newcapacity];
                 //如何复制不打乱原来顺序是关键
@@ -63,37 +108,6 @@ public class ArrayDeque<T> {
                 capacity = newcapacity;
                 nextFirst = newcapacity-1;
                 nextLast = size;
-        }
-        public T removeFirst(){//remove是真的挺难的！！！
-                //不是常数时间
-                int first = (nextFirst + 1) % capacity;
-                int last = (nextLast - 1 + capacity) % capacity;
-                T result = items [first];
-                while (first != last){
-                        items[first] = items[first + 1];
-                        first = (first + 1) % capacity;
-                }
-                items[first] = null;
-                size -= 1;
-                nextLast -=1;
-                return result;
-        }
-        public T removeLast(){//remove是真的挺难的！！！
-                int last = (nextLast - 1 + capacity) % capacity;
-                T result = items [last];
-                items[last] = null;
-                size -= 1;
-                nextLast = last;
-                return result;
-        }
-        public T get(int index){
-                if (index <= size - 1){
-                        int first = (nextFirst + 1) % capacity;
-                        return items[first + index];
-                }
-                else {
-                        return null;
-                }
         }
         public static void main(String[] args){
                 ArrayDeque<Integer> list = new ArrayDeque<Integer>();

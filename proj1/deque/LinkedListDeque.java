@@ -1,6 +1,6 @@
 package deque;
 
-public class LinkedListDeque <T> {
+public class LinkedListDeque <T> implements Deque<T>{
     /*-----------------TNode----------------*/
     public class TNode{
         public T item;
@@ -25,6 +25,7 @@ public class LinkedListDeque <T> {
         sentinel.next=sentinel;
     }
     /*----------------Methods-----------------*/
+    @Override
     public void addFirst(T item){
         TNode newNode = new TNode(item,sentinel,sentinel.next);
         TNode newNodeNext = sentinel.next;
@@ -32,6 +33,7 @@ public class LinkedListDeque <T> {
         sentinel.next = newNode;
         size += 1;
     }
+    @Override
     public void addLast(T item){
         //卡了半天了，第一个prev总是指不到sentinel
         TNode newNode = new TNode(item,sentinel.prev,sentinel);
@@ -40,12 +42,11 @@ public class LinkedListDeque <T> {
         sentinel.prev = newNode;
         size += 1;
     }
-    public boolean isEmpty(){
-        return size == 0;
-    }
+    @Override
     public int size(){
         return size;
     }
+    @Override
     public void printDeque(){
         TNode p = sentinel.next;
         while (p != sentinel){
@@ -54,6 +55,7 @@ public class LinkedListDeque <T> {
         }
         System.out.println(" ");
     }
+    @Override
     public T removeFirst(){
         if (size == 0){
             return null;
@@ -66,6 +68,7 @@ public class LinkedListDeque <T> {
             return  removeNode;
         }
     }
+    @Override
     public T removeLast(){
         if (size == 0){
             return null;
@@ -78,6 +81,7 @@ public class LinkedListDeque <T> {
             return  removeNode;
         }
     }
+    @Override
     public T get(int index){
         if (index > size - 1 || index < 0) {
             return null;
@@ -93,7 +97,6 @@ public class LinkedListDeque <T> {
     //public T getRecursive(int index){
         //如何在只有参数index的情况下，并且对index > size - 1 时返回 null ？
     //}
-
     public static void main(String[] args){
         LinkedListDeque <Integer> list = new LinkedListDeque<Integer>();
         list.addFirst(2);
